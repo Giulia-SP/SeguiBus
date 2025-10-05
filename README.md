@@ -1,20 +1,44 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SeguiBus
 
-# Run and deploy your AI Studio app
+**SeguiBus** é um aplicativo inclusivo voltado para facilitar a mobilidade de pessoas com deficiência visual, auditiva e de fala no transporte público. O aplicativo oferece funcionalidades para acompanhamento de rotas de ônibus, comunicação simplificada e autonomia no transporte urbano.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/drive/1epWPvdhdKcSrhH4wGB9tEPv5VM4w65b7
+## Funcionalidades
 
-## Run Locally
+- Visualização de rotas de ônibus em tempo real.
+- Comunicação por meio de frases prontas para pessoas com deficiência auditiva ou de fala.
+- Acompanhamento de trajeto e localização do usuário.
+- Design inclusivo para melhorar a experiência de usuários com diferentes necessidades.
 
-**Prerequisites:**  Node.js
+---
 
+## Tecnologias Utilizadas
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Frontend
+- **React** com **TypeScript**
+- **Vite** como bundler e servidor de desenvolvimento
+- **CSS/HTML** para estilização e estrutura da interface
+
+### Backend
+- Atualmente, o projeto não possui backend dedicado. Possíveis integrações futuras podem incluir APIs externas para dados de transporte.
+
+### Banco de Dados
+- Nenhum banco de dados foi implementado. O projeto pode utilizar armazenamento local ou APIs externas.
+
+### Plataforma de Implantação
+- Pode ser facilmente implantado em plataformas como **Render**, **Vercel** ou **Netlify**.
+
+---
+
+## Como Executar o Projeto Localmente
+
+1. Clone o repositório:
+
+```bash
+git clone https://github.com/Giulia-SP/SeguiBus.git
+cd SeguiBus
+
+npm install
+
+npm run dev
