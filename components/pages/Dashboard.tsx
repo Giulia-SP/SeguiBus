@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BusRoute } from '../../types';
+import { BusRoute, BusStop } from '../../types';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Volume2, Search, MessageCircle, Route, Navigation, LocateFixed, ArrowUpDown, Star } from 'lucide-react';
+import { MapPin, Search, MessageCircle, Route, Navigation, LocateFixed, ArrowUpDown, Star, Volume2 } from 'lucide-react';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
-import { useVoiceCommand } from '../../contexts/VoiceCommandContext';
 import { useRoutes } from '../../contexts/RouteContext';
 import { useGeolocation } from '../useGeolocation';
 import { MOCK_STOPS } from '../../constants';
@@ -15,61 +14,124 @@ const getDistance = (loc1: {lat: number, lng: number}, loc2: {lat: number, lng: 
   return Math.sqrt(dx * dx + dy * dy);
 };
 
+// Levenshtein distance function for finding the closest string match.
+const levenshtein = (s1: string, s2: string): number => {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+
+    const costs: number[] = [];
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i === 0) {
+                costs[j] = j;
+            } else {
+                if (j > 0) {
+                    let newValue = costs[j - 1];
+                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                    }
+                    costs[j - 1] = lastValue;
+                    lastValue = newValue;
+                }
+            }
+        }
+        if (i > 0) {
+            costs[s2.length] = lastValue;
+        }
+    }
+    return costs[s2.length];
+};
+
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { speak } = useAccessibility();
-  const { lastCommand, clearLastCommand } = useVoiceCommand();
   const { routes, toggleFavorite } = useRoutes();
   const { location } = useGeolocation();
 
   const [fromLocation, setFromLocation] = useState('');
   const [toLocation, setToLocation] = useState('');
   const [filteredRoutes, setFilteredRoutes] = useState<BusRoute[]>(routes);
+  const [searchTitle, setSearchTitle] = useState('Ônibus Próximos');
+
 
   useEffect(() => {
     setFilteredRoutes(routes);
   }, [routes]);
   
+  const findClosestStop = (query: string): BusStop | null => {
+    if (!query) return null;
+    let minDistance = Infinity;
+    let bestMatch: BusStop | null = null;
+    const normalizedQuery = query.toLowerCase();
+  
+    MOCK_STOPS.forEach(stop => {
+      const distance = levenshtein(normalizedQuery, stop.name.toLowerCase());
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestMatch = stop;
+      }
+    });
+  
+    // Threshold for a "good enough" match (e.g., distance < 3 or less than half the query length)
+    if (bestMatch && minDistance < Math.max(3, normalizedQuery.length / 2)) {
+      return bestMatch;
+    }
+    return null;
+  };
+  
   const handleSearch = () => {
     const fromQuery = fromLocation.trim().toLowerCase();
     const toQuery = toLocation.trim().toLowerCase();
-
+  
     if (!fromQuery && !toQuery) {
       setFilteredRoutes(routes);
+      setSearchTitle('Ônibus Próximos');
       return;
     }
-
+    
+    setSearchTitle('Resultados da Busca');
+  
     const filtered = routes.filter(route => {
-      // Case 1: Both "From" and "To" are specified for journey planning.
+      // Case 1: Journey planning (both fields filled)
       if (fromQuery && toQuery) {
-        // Find the first stop that matches each query.
-        const fromStop = MOCK_STOPS.find(s => s.name.toLowerCase().includes(fromQuery));
-        const toStop = MOCK_STOPS.find(s => s.name.toLowerCase().includes(toQuery));
-
-        // If either stop isn't found, the route doesn't match.
-        if (!fromStop || !toStop) {
-            return false;
-        }
-
+        const fromStop = findClosestStop(fromQuery);
+        const toStop = findClosestStop(toQuery);
+  
+        if (!fromStop || !toStop) return false;
+  
         const fromIndex = route.stops.indexOf(fromStop.id);
         const toIndex = route.stops.indexOf(toStop.id);
-
-        // A valid journey requires both stops to be on the route in the correct order.
+        
         return fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex;
       }
-      
-      // Case 2: Only one field is specified, searching for any route passing through a matching stop.
+  
+      // Case 2: Single query search (route name/number, destination, or single stop)
       const singleQuery = fromQuery || toQuery;
-      // Check if any stop on the route includes the search query in its name.
+      const threshold = Math.max(3, singleQuery.length / 2);
+  
+      // Check route name or number. `includes` is great for numbers like "190".
+      // `levenshtein` is great for typos in the name itself.
+      if (route.name.toLowerCase().includes(singleQuery) || levenshtein(route.name.toLowerCase(), singleQuery) < threshold) {
+        return true;
+      }
+      
+      // Check route destination
+      if (levenshtein(route.destination.toLowerCase(), singleQuery) < threshold) {
+        return true;
+      }
+  
+      // Check stop names on the route
       return route.stops.some(stopId => {
         const stop = MOCK_STOPS.find(s => s.id === stopId);
-        return stop && stop.name.toLowerCase().includes(singleQuery);
+        return stop && levenshtein(stop.name.toLowerCase(), singleQuery) < threshold;
       });
     });
-
+  
     setFilteredRoutes(filtered);
   };
+  
   
   const handleUseCurrentLocation = () => {
     if (location) {
@@ -98,19 +160,11 @@ const Dashboard: React.FC = () => {
     setFromLocation('');
     setToLocation('');
     setFilteredRoutes(routes);
+    setSearchTitle('Ônibus Próximos');
   };
 
-  useEffect(() => {
-    if (lastCommand?.command === 'READ_ROUTES') {
-      const routesText = filteredRoutes.map(route => `${route.name}, com destino para ${route.destination}.`).join(' ');
-      const fullText = routesText ? `Os ônibus encontrados são: ${routesText}` : 'Nenhum ônibus encontrado para essa rota.';
-      speak(fullText);
-      clearLastCommand();
-    }
-  }, [lastCommand, filteredRoutes, speak, clearLastCommand]);
-
-  const handleSpeak = (text: string) => {
-    speak(text);
+  const handleSpeak = (route: BusRoute) => {
+    speak(`Rota ${route.name}, com destino para ${route.destination}`);
   };
   
   const favoriteRoutes = routes.filter(route => route.isFavorite);
@@ -126,7 +180,7 @@ const Dashboard: React.FC = () => {
             <div className="relative">
                 <input
                     type="text"
-                    placeholder="De: Ponto de partida"
+                    placeholder="De: Ponto de partida ou Nº da Linha"
                     value={fromLocation}
                     onChange={(e) => setFromLocation(e.target.value)}
                     className="w-full pl-4 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -184,18 +238,18 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
                   <button
+                    onClick={() => handleSpeak(route)}
+                    className="p-3 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    aria-label={`Ouvir informações da rota ${route.name}`}
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </button>
+                  <button
                     onClick={() => toggleFavorite(route.id)}
                     className="p-3 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
                     aria-label={route.isFavorite ? `Desfavoritar rota ${route.name}` : `Favoritar rota ${route.name}`}
                   >
                     <Star className={`h-5 w-5 ${route.isFavorite ? 'fill-current' : ''}`} />
-                  </button>
-                  <button 
-                    onClick={() => handleSpeak(`${route.name}, destino ${route.destination}`)}
-                    className="p-3 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                    aria-label={`Ouvir informações do ${route.name}`}
-                  >
-                    <Volume2 className="h-5 w-5" />
                   </button>
                   <button 
                     onClick={() => navigate(`/route/${route.id}`)}
@@ -216,7 +270,7 @@ const Dashboard: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg">
         <h2 className="text-2xl font-bold mb-4 flex items-center">
             <Route className="mr-3 h-7 w-7 text-green-500" />
-            Ônibus Próximos
+            {searchTitle}
         </h2>
         <div className="space-y-4">
           {filteredRoutes.length > 0 ? (
@@ -228,18 +282,18 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
                    <button
+                    onClick={() => handleSpeak(route)}
+                    className="p-3 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    aria-label={`Ouvir informações da rota ${route.name}`}
+                  >
+                    <Volume2 className="h-5 w-5" />
+                  </button>
+                   <button
                     onClick={() => toggleFavorite(route.id)}
                     className="p-3 bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300 rounded-full hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
                     aria-label={route.isFavorite ? `Desfavoritar rota ${route.name}` : `Favoritar rota ${route.name}`}
                   >
                     <Star className={`h-5 w-5 ${route.isFavorite ? 'fill-current' : ''}`} />
-                  </button>
-                  <button 
-                    onClick={() => handleSpeak(`${route.name}, destino ${route.destination}`)}
-                    className="p-3 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                    aria-label={`Ouvir informações do ${route.name}`}
-                  >
-                    <Volume2 className="h-5 w-5" />
                   </button>
                   <button 
                     onClick={() => navigate(`/route/${route.id}`)}

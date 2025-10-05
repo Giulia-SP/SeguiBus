@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { BusRoute, BusStop } from '../../types';
 import { MOCK_STOPS } from '../../constants';
-import { ArrowLeft, MapPin, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MapPin, AlertTriangle, Clock } from 'lucide-react';
 import RouteMap from '../RouteMap';
 import { useGeolocation } from '../useGeolocation';
 import { useRoutes } from '../../contexts/RouteContext';
@@ -63,6 +64,29 @@ const RouteDetail: React.FC = () => {
           )}
           <RouteMap stops={stops} currentStop={currentStop} userLocation={location} routeName={route.name}/>
         </div>
+        
+        {route.schedule && Object.keys(route.schedule).length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4 flex items-center">
+              <Clock className="mr-3 h-6 w-6 text-purple-500" />
+              Horários Programados
+            </h2>
+            <ul className="space-y-3">
+              {stops.map(stop => (
+                <li key={stop.id} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <p className="font-semibold text-gray-800 dark:text-gray-200">{stop.name}</p>
+                  {route.schedule?.[stop.id] && route.schedule[stop.id].length > 0 ? (
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      {route.schedule[stop.id].join('  -  ')}
+                    </p>
+                  ) : (
+                    <p className="text-gray-400 dark:text-gray-500 text-sm italic">Nenhum horário cadastrado para esta parada.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div>
             <h2 className="text-2xl font-bold mb-4">Paradas</h2>

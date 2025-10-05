@@ -1,7 +1,5 @@
 {
   "name": "SeguiBus",
   "description": "An inclusive application to facilitate the use of public transport for people with visual, auditory, and speech impairments, offering real-time information and accessibility features.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

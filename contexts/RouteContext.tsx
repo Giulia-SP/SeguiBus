@@ -1,10 +1,11 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { BusRoute, BusStop } from '../types';
 import { MOCK_ROUTES, MOCK_STOPS } from '../constants';
 
 interface RouteContextType {
   routes: BusRoute[];
-  addRoute: (routeData: Omit<BusRoute, 'id'>) => void;
+  addRoute: (routeData: Omit<BusRoute, 'id' | 'isFavorite'>) => void;
   updateRoute: (updatedRoute: BusRoute) => void;
   deleteRoute: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -120,17 +121,16 @@ export const RouteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [routes]);
 
 
-  const addRoute = (routeData: Omit<BusRoute, 'id'>) => {
+  const addRoute = (routeData: Omit<BusRoute, 'id' | 'isFavorite'>) => {
     const { stops, finalStopName, matchFound } = resolveRouteForDestination(routeData.destination);
     
     const newRoute: BusRoute = {
       name: routeData.name,
-      // If a match was found for the user's input, we preserve their original text.
-      // Otherwise, we use the name of the final stop from the generated random route.
       destination: matchFound ? routeData.destination : finalStopName,
       stops: stops,
-      id: new Date().toISOString(), // Simple unique ID generation
+      id: new Date().toISOString(),
       isFavorite: false,
+      schedule: {},
     };
     setRoutes(prevRoutes => [...prevRoutes, newRoute]);
   };
@@ -138,10 +138,21 @@ export const RouteProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateRoute = (updatedRoute: BusRoute) => {
     const { stops, finalStopName, matchFound } = resolveRouteForDestination(updatedRoute.destination);
     
+    // If the stops have changed, clear the schedule for stops that no longer exist.
+    const newSchedule: { [stopId: string]: string[] } = {};
+    if (updatedRoute.schedule) {
+        for(const stopId of stops) {
+            if(updatedRoute.schedule[stopId]) {
+                newSchedule[stopId] = updatedRoute.schedule[stopId];
+            }
+        }
+    }
+
     const newUpdatedRoute: BusRoute = {
       ...updatedRoute,
       stops: stops,
       destination: matchFound ? updatedRoute.destination : finalStopName,
+      schedule: newSchedule,
     };
 
     setRoutes(prevRoutes =>

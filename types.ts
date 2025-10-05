@@ -14,11 +14,13 @@ export interface BusRoute {
   destination: string;
   stops: string[]; // array of BusStop ids
   isFavorite?: boolean;
+  schedule?: { [stopId: string]: string[] };
 }
 
 export interface User {
   id: string;
   email: string;
+  name: string;
 }
 
 export interface AccessibilitySettings {

@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bus, AtSign, KeyRound } from 'lucide-react';
+import { Bus, AtSign, KeyRound, User } from 'lucide-react';
 
 const Login: React.FC = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -12,15 +13,22 @@ const Login: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!email || !password || (!isLogin && !name)) {
       setError('Por favor, preencha todos os campos.');
       return;
     }
     setError('');
+    
     if (isLogin) {
-      login(email);
+      const success = login(email, password);
+      if (!success) {
+        setError('Email não cadastrado ou senha inválida. Por favor, verifique seus dados ou cadastre-se.');
+      }
     } else {
-      register(email);
+      const success = register(name, email, password);
+      if (!success) {
+        setError('Este email já está em uso. Por favor, tente fazer login.');
+      }
     }
   };
 
@@ -37,6 +45,22 @@ const Login: React.FC = () => {
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {!isLogin && (
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nome Completo"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
           <div className="relative">
             <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input

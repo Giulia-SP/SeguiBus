@@ -2,7 +2,6 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
-import { VoiceCommandProvider } from './contexts/VoiceCommandContext';
 import { RouteProvider } from './contexts/RouteContext';
 import Login from './components/pages/Login';
 import Dashboard from './components/pages/Dashboard';
@@ -10,7 +9,6 @@ import RouteDetail from './components/pages/RouteDetail';
 import Communication from './components/pages/Communication';
 import CrudRoutes from './components/pages/CrudRoutes';
 import Header from './components/Header';
-import VoiceControl from './components/VoiceControl';
 
 const App: React.FC = () => {
   return (
@@ -18,9 +16,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <HashRouter>
           <RouteProvider>
-            <VoiceCommandProvider>
-              <Main />
-            </VoiceCommandProvider>
+            <Main />
           </RouteProvider>
         </HashRouter>
       </AuthProvider>
@@ -44,7 +40,6 @@ const Main: React.FC = () => {
           <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
         </Routes>
       </main>
-      {user && <VoiceControl />}
     </div>
   );
 };

@@ -16,7 +16,7 @@ const Header: React.FC = () => {
         <h1 className="text-2xl font-bold">SeguiBus</h1>
       </div>
       <div className="flex items-center space-x-4">
-        <span className="hidden sm:block">Olá, {user?.email.split('@')[0]}</span>
+        <span className="hidden sm:block">Olá, {user?.name}</span>
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
