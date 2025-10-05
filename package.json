@@ -1,13 +1,24 @@
 {
   "name": "seguibus",
   "version": "1.0.0",
-  "description": "An inclusive application to facilitate the use of public transport for people with visual, auditory, and speech impairments, offering real-time information and accessibility features.",
   "private": true,
+  "description": "An inclusive application to facilitate the use of public transport for people with visual, auditory, and speech impairments, offering real-time information and accessibility features.",
   "scripts": {
-    "build": "echo \"Build step not required, serving static files.\"",
-    "start": "serve -s ."
+    "dev": "vite",
+    "build": "vite build",
+    "start": "serve -s dist"
   },
   "dependencies": {
+    "lucide-react": "^0.379.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.23.1",
     "serve": "^14.2.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.2",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.2.11"
   }
 }
