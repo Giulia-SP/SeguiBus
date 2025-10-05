@@ -4,6 +4,7 @@
   "description": "An inclusive application to facilitate the use of public transport for people with visual, auditory, and speech impairments, offering real-time information and accessibility features.",
   "private": true,
   "scripts": {
+    "build": "echo \"Build step not required, serving static files.\"",
     "start": "serve -s ."
   },
   "dependencies": {
