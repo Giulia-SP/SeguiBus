@@ -45,3 +45,10 @@
 | 🌐 *Compatibilidade* | Totalmente responsivo e otimizado para desktop e mobile.             |
 
 ---
+
+## 🚀 Execução Local (Opcional)
+Caso queira rodar o projeto localmente:
+1. Clone o repositório: `git clone https://github.com/Giulia-SP/SeguiBus.git`
+2. Instale as dependências: `npm install`
+3. Inicie o servidor: `npm run dev`
+4. Acesse em: `http://localhost:5173`
