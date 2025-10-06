@@ -24,10 +24,10 @@
 - **Vite** como bundler e servidor de desenvolvimento
 - **CSS/HTML** para estilização e estrutura da interface
 
-### 🗄️ Banco de Dados
+### ⚙️ Backend
 - Atualmente, o projeto não possui backend dedicado. Possíveis integrações futuras podem incluir APIs externas para dados de transporte.
 
-### ☁️ Plataforma de Implantação
+### 🗄️ Banco de Dados
 - Nenhum banco de dados foi implementado. O projeto pode utilizar armazenamento local ou APIs externas.
 
 ### ☁️ Plataforma de Implantação
